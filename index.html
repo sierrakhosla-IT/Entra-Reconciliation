@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entra vs SharePoint — Inventory Reconciliation Guide</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --pink:        #EDA8BC;
+  --lavender:    #9895C5;
+  --peach:       #F0A080;
+  --grape:       #4A4280;
+  --pastel:      #C8C454;
+  --dark:        #1E1A3A;
+  --dark2:       #252050;
+  --cream:       #FAF7F2;
+  --cream2:      #F2EEF8;
+  --mid:         #3A3660;
+  --soft:        #7A77A8;
+  --border:      #E4E1F0;
+  --white:       #FFFFFF;
+  --shadow:      0 2px 12px rgba(30,26,58,0.06);
+  --shadow-md:   0 4px 20px rgba(30,26,58,0.09);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--cream);
+  color:var(--mid);
+  font-size:15px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── PROGRESS ─────────────────────────────────────── */
+#progress{
+  position:fixed;top:0;left:0;
+  height:2px;background:var(--pink);
+  transition:width .15s ease;z-index:300;
+  box-shadow:0 0 8px rgba(152,149,197,.5);
+}
+
+/* ── NAV ──────────────────────────────────────────── */
+.nav{
+  position:sticky;top:0;z-index:200;
+  background:var(--dark);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  height:50px;display:flex;align-items:center;
+  padding:0 28px;gap:0;overflow-x:auto;
+  scrollbar-width:none;
+}
+.nav::-webkit-scrollbar{display:none;}
+.nav-brand{
+  font-size:11px;font-weight:600;
+  color:rgba(255,255,255,.35);
+  letter-spacing:.1em;text-transform:uppercase;
+  white-space:nowrap;padding-right:20px;
+  border-right:1px solid rgba(255,255,255,.1);
+  margin-right:16px;flex-shrink:0;
+}
+.nav-items{display:flex;gap:2px;}
+.nbtn{
+  background:none;border:none;cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-size:13px;
+  font-weight:500;color:rgba(255,255,255,.42);
+  padding:6px 14px;border-radius:6px;
+  display:flex;align-items:center;gap:7px;
+  white-space:nowrap;transition:all .15s ease;
+}
+.nbtn:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8);}
+.nbtn.active{background:rgba(152,149,197,.18);color:var(--pink);}
+.nbadge{
+  width:19px;height:19px;border-radius:50%;
+  background:var(--grape);color:white;
+  font-size:9px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:background .15s;
+}
+.nbtn.active .nbadge{background:var(--pink);}
+.nbadge.qr{background:rgba(255,255,255,.15);font-size:8px;}
+
+/* ── HERO ─────────────────────────────────────────── */
+.hero{
+  background:var(--dark2);
+  padding:52px 48px 36px;
+  display:grid;grid-template-columns:1fr 260px;
+  gap:40px;align-items:start;
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.hero-eye{
+  font-size:11px;font-weight:600;
+  color:var(--pink);letter-spacing:.12em;
+  text-transform:uppercase;margin-bottom:14px;
+}
+.hero-h1{
+  font-size:42px;font-weight:600;
+  line-height:1.1;color:white;margin-bottom:8px;
+}
+.hero-h1 em{color:var(--pink);font-style:normal;}
+.hero-sub{font-size:14px;color:rgba(255,255,255,.35);margin-top:10px;}
+.hero-meta{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;padding:22px 24px;
+}
+.meta-block{display:flex;flex-direction:column;gap:12px;}
+.meta-row{display:flex;flex-direction:column;gap:3px;}
+.meta-lbl{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.1em;text-transform:uppercase;}
+.meta-val{font-size:13px;font-weight:500;color:rgba(255,255,255,.8);}
+
+/* ── RUN OF SHOW ──────────────────────────────────── */
+.ros{
+  background:rgba(255,255,255,.03);
+  border-top:1px solid rgba(255,255,255,.05);
+  border-bottom:1px solid rgba(255,255,255,.05);
+  padding:22px 48px;
+  display:flex;gap:0;align-items:flex-start;
+  overflow-x:auto;scrollbar-width:none;
+}
+.ros::-webkit-scrollbar{display:none;}
+.ros-node{
+  display:flex;flex-direction:column;gap:5px;
+  min-width:110px;position:relative;cursor:pointer;
+  padding-right:20px;
+}
+.ros-node:not(:last-child)::after{
+  content:'›';position:absolute;
+  right:4px;top:8px;
+  color:rgba(255,255,255,.2);font-size:13px;
+}
+.ros-badge{
+  width:26px;height:26px;border-radius:50%;
+  background:var(--grape);color:white;
+  font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:3px;transition:transform .15s;
+}
+.ros-node:hover .ros-badge{transform:scale(1.08);}
+.ros-badge.b-pink{background:var(--pink);}
+.ros-badge.b-soft{background:rgba(255,255,255,.15);font-size:8px;}
+.ros-title{font-size:12px;font-weight:600;color:rgba(255,255,255,.8);line-height:1.3;}
+.ros-time{font-size:10px;color:rgba(255,255,255,.3);font-family:'DM Mono',monospace;}
+
+/* ── MAIN ─────────────────────────────────────────── */
+.main{max-width:880px;margin:0 auto;padding:44px 24px 90px;}
+
+/* ── SECTION ──────────────────────────────────────── */
+.sec{margin-bottom:60px;scroll-margin-top:66px;}
+.sec-hd{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+.sec-num{
+  width:36px;height:36px;border-radius:50%;
+  background:var(--grape);color:white;
+  font-size:13px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.sec-num.pink{background:var(--pink);}
+.sec-num.soft{background:var(--soft);font-size:10px;}
+.sec-title{font-size:21px;font-weight:600;color:var(--dark);line-height:1.2;}
+.sec-title small{
+  display:block;font-size:11px;font-weight:400;
+  color:var(--soft);margin-top:3px;
+  font-family:'DM Mono',monospace;
+}
+.sec-rule{height:1px;background:var(--border);margin-bottom:22px;}
+
+/* ── START PILL ───────────────────────────────────── */
+.start-pill{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(152,149,197,.12);
+  border:1px solid rgba(152,149,197,.4);
+  border-radius:20px;padding:6px 14px;
+  font-size:11px;font-weight:500;
+  color:var(--grape);margin-bottom:18px;
+  font-family:'DM Mono',monospace;
+}
+
+/* ── TWO-COL ──────────────────────────────────────── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+
+/* ── PANELS ───────────────────────────────────────── */
+.panel{
+  border-radius:12px;overflow:hidden;
+  border:1px solid var(--border);
+  box-shadow:var(--shadow);
+}
+.panel-do{border-left:4px solid var(--grape);}
+.panel-why{border-left:4px solid var(--peach);}
+.panel-lbl{
+  padding:11px 16px 9px;
+  border-bottom:1px solid var(--border);
+  font-size:10px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;
+  display:flex;align-items:center;gap:6px;
+  background:var(--cream2);
+}
+.panel-lbl.grape{color:var(--grape);}
+.panel-lbl.peach{color:#8B6A20;}
+.panel-body{padding:16px;background:var(--white);}
+
+/* Step list */
+.slist{list-style:none;display:flex;flex-direction:column;gap:9px;}
+.sitem{display:flex;gap:10px;align-items:flex-start;}
+.snum{
+  width:20px;height:20px;border-radius:50%;
+  background:rgba(152,149,197,.25);
+  border:1px solid rgba(74,66,128,.18);
+  color:var(--grape);font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;
+}
+.stxt{font-size:13.5px;color:var(--mid);line-height:1.5;}
+.stxt strong{color:var(--dark);}
+.stxt code{
+  font-family:'DM Mono',monospace;font-size:12px;
+  background:var(--cream2);border:1px solid var(--border);
+  border-radius:4px;padding:1px 6px;color:var(--grape);
+}
+
+/* Why bullets */
+.why-item{
+  font-size:13.5px;color:var(--mid);
+  font-style:italic;line-height:1.6;
+  border-left:2px solid rgba(240,160,128,.4);
+  padding-left:12px;margin-bottom:10px;
+}
+.why-item:last-child{margin-bottom:0;}
+.why-item strong{color:var(--dark);font-style:normal;}
+
+/* ── CARD ─────────────────────────────────────────── */
+.card{
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:12px;overflow:hidden;
+  margin-bottom:14px;box-shadow:var(--shadow);
+}
+.card-hd{
+  padding:13px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:9px;
+  background:var(--cream2);
+}
+.card-lbl{
+  font-size:10px;font-weight:700;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--grape);
+}
+.card-lbl.pink{color:var(--pink);}
+.card-body{padding:18px 20px;}
+
+/* ── CHECKLIST ────────────────────────────────────── */
+.cklist{display:flex;flex-direction:column;}
+.ckitem{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:11px 6px;border-bottom:1px solid var(--border);
+  cursor:pointer;border-radius:7px;
+  transition:background .1s;
+}
+.ckitem:last-child{border-bottom:none;}
+.ckitem:hover{background:var(--cream);}
+.ckitem.done{opacity:.45;}
+.ckbox{
+  width:20px;height:20px;border-radius:5px;
+  border:2px solid rgba(152,149,197,.35);flex-shrink:0;
+  margin-top:1px;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.ckitem.done .ckbox{background:var(--pink);border-color:var(--pink);}
+.cktick{width:10px;height:10px;opacity:0;color:white;transition:opacity .12s;}
+.ckitem.done .cktick{opacity:1;}
+.cktxt{font-size:14px;color:var(--mid);line-height:1.5;flex:1;}
+.cktxt strong{color:var(--dark);}
+.cktxt code{
+  font-family:'DM Mono',monospace;font-size:11.5px;
+  background:var(--cream2);border:1px solid var(--border);
+  border-radius:4px;padding:1px 5px;color:var(--grape);
+}
+
+/* ── CALLOUT ──────────────────────────────────────── */
+.callout{
+  border-radius:10px;padding:14px 18px;margin-bottom:14px;
+  display:flex;gap:12px;align-items:flex-start;
+  font-size:13.5px;line-height:1.5;
+}
+.c-pink{
+  background:rgba(237,168,188,.15);
+  border:1px solid rgba(255,118,183,.3);color:var(--dark);
+}
+.c-lavender{
+  background:rgba(152,149,197,.12);
+  border:1px solid rgba(152,149,197,.4);color:var(--dark);
+}
+.c-peach{
+  background:rgba(240,160,128,.08);
+  border:1px solid rgba(240,160,128,.35);color:#7A3A10;
+}
+.c-grape{
+  background:rgba(158,31,99,.06);
+  border:1px solid rgba(74,66,128,.18);color:var(--dark);
+}
+.c-ico{font-size:15px;flex-shrink:0;margin-top:1px;}
+
+/* ── PRIORITY TABLE ───────────────────────────────── */
+.pri-table{width:100%;border-collapse:collapse;border-radius:10px;overflow:hidden;border:1px solid var(--border);}
+.pri-table tr:nth-child(odd) td{background:var(--cream);}
+.pri-table tr:nth-child(even) td{background:var(--white);}
+.pri-table td{
+  padding:13px 16px;font-size:14px;
+  color:var(--mid);border-bottom:1px solid var(--border);
+  vertical-align:middle;line-height:1.4;
+}
+.pri-table tr:last-child td{border-bottom:none;}
+.pri-table td:first-child{
+  width:52px;font-family:'DM Mono',monospace;
+  font-size:14px;font-weight:700;text-align:center;
+}
+.pri-1 td:first-child{
+  background:var(--grape)!important;
+  color:white;font-size:16px;
+}
+.pri-table td:nth-child(2){font-weight:600;color:var(--dark);width:34%;}
+.pri-table td:nth-child(3){font-size:13px;color:var(--soft);}
+
+/* ── FLAG TABLE ───────────────────────────────────── */
+.flag-table{width:100%;border-collapse:collapse;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.flag-table th{
+  font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--soft);text-align:left;padding:11px 16px;
+  background:var(--cream2);border-bottom:1px solid var(--border);
+}
+.flag-table td{
+  padding:12px 16px;font-size:14px;color:var(--mid);
+  border-bottom:1px solid var(--border);vertical-align:top;line-height:1.4;
+}
+.flag-table tr:last-child td{border-bottom:none;}
+.flag-table tr:nth-child(even) td{background:var(--cream);}
+.flag-name{
+  font-weight:600;font-size:13px;
+  color:var(--grape);
+  font-family:'DM Mono',monospace;
+}
+
+/* ── EXCEPTION CARDS ──────────────────────────────── */
+.exc-card{
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:12px;overflow:hidden;
+  margin-bottom:14px;box-shadow:var(--shadow);
+}
+.exc-hd{
+  display:flex;align-items:center;
+  justify-content:space-between;
+  padding:14px 20px;
+  border-bottom:1px solid var(--border);
+  background:var(--cream2);
+}
+.exc-title{font-size:16px;font-weight:600;color:var(--dark);}
+.exc-tag{
+  font-size:10px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;padding:4px 10px;
+  border-radius:20px;
+}
+.tag-grape{background:rgba(74,66,128,.1);color:var(--grape);}
+.tag-pink{background:rgba(152,149,197,.18);color:#7A4060;}
+.tag-peach{background:rgba(240,160,128,.18);color:#7A3A10;}
+.tag-lav{background:rgba(152,149,197,.25);color:#4A4280;}
+.tag-soft{background:var(--cream2);color:var(--soft);border:1px solid var(--border);}
+.exc-body{padding:0;}
+.exc-row{
+  display:flex;gap:12px;align-items:flex-start;
+  padding:11px 20px;border-bottom:1px solid var(--border);
+  font-size:14px;color:var(--mid);line-height:1.4;
+}
+.exc-row:last-child{border-bottom:none;}
+.exc-row:nth-child(odd){background:var(--cream);}
+.exc-bullet{color:var(--pink);font-size:16px;line-height:1;flex-shrink:0;margin-top:1px;}
+
+/* ── OP VALIDATION BOX ────────────────────────────── */
+.op-val{
+  border-top:1px solid var(--border);
+  padding-top:16px;margin-top:8px;
+}
+.op-val-lbl{
+  font-size:10px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--pink);margin-bottom:10px;
+}
+
+/* ── Q&A ACCORDION ────────────────────────────────── */
+.qa-wrap{display:flex;flex-direction:column;gap:5px;}
+.qa-item{border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.qa-trigger{
+  width:100%;background:var(--white);border:none;cursor:pointer;
+  padding:14px 18px;text-align:left;
+  display:flex;align-items:center;gap:10px;
+  font-family:'DM Sans',sans-serif;
+  transition:background .1s;
+}
+.qa-trigger:hover{background:var(--cream);}
+.qa-trigger.open{background:rgba(152,149,197,.12);}
+.qa-q{font-size:14px;font-weight:500;color:var(--dark);flex:1;text-align:left;}
+.qa-chev{
+  width:20px;height:20px;border-radius:50%;
+  background:var(--cream2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;color:var(--soft);flex-shrink:0;
+  transition:transform .2s,background .15s;
+}
+.qa-trigger.open .qa-chev{transform:rotate(180deg);background:rgba(152,149,197,.25);color:var(--grape);border-color:rgba(152,149,197,.4);}
+.qa-ans{
+  display:none;padding:0 18px;font-size:13.5px;color:var(--mid);
+  line-height:1.6;border-top:1px solid var(--border);background:var(--cream);
+}
+.qa-ans.open{display:block;padding-top:14px;padding-bottom:16px;}
+
+/* ── STATUS TABLE ─────────────────────────────────── */
+.status-table{width:100%;border-collapse:collapse;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.status-table th{
+  font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--soft);text-align:left;padding:11px 14px;
+  background:var(--cream2);border-bottom:1px solid var(--border);
+}
+.status-table td{
+  padding:11px 14px;font-size:13.5px;
+  color:var(--mid);border-bottom:1px solid var(--border);
+  line-height:1.4;vertical-align:top;
+}
+.status-table tr:last-child td{border-bottom:none;}
+.status-table tr:nth-child(even) td{background:var(--cream);}
+.status-name{
+  font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--grape);
+}
+
+/* ── KEY NUMBERS ──────────────────────────────────── */
+.kn-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.kn-chip{
+  background:var(--white);border:1px solid var(--border);
+  border-radius:10px;padding:10px 16px;
+  display:flex;flex-direction:column;gap:3px;
+  box-shadow:var(--shadow);
+}
+.kn-lbl{font-size:9px;color:var(--soft);text-transform:uppercase;letter-spacing:.08em;}
+.kn-val{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:var(--grape);}
+
+/* ── RESET BTN ────────────────────────────────────── */
+.reset-btn{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--dark);color:rgba(255,255,255,.6);
+  border:none;border-radius:20px;
+  padding:8px 16px;font-size:12px;
+  font-family:'DM Sans',sans-serif;cursor:pointer;
+  display:flex;align-items:center;gap:6px;
+  box-shadow:0 4px 16px rgba(30,26,58,0.25);
+  transition:all .15s;z-index:100;
+}
+.reset-btn:hover{background:#2A2660;color:white;}
+.ck-count{
+  background:var(--pink);color:white;
+  border-radius:10px;padding:1px 8px;
+  font-size:11px;font-weight:700;
+}
+
+/* ── RESPONSIVE ───────────────────────────────────── */
+@media(max-width:640px){
+  .two-col{grid-template-columns:1fr;}
+  .hero{grid-template-columns:1fr;}
+  .hero-meta{display:none;}
+  .hero-h1{font-size:30px;}
+  .hero{padding:32px 20px 28px;}
+  .ros{padding:18px 20px;}
+  .main{padding:28px 16px 70px;}
+}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.sec{animation:fadeUp .3s ease both;}
+
+/* ── PROGRESS INDICATOR ───────────────────────────────── */
+.prog-strip{
+  position:sticky;top:50px;z-index:190;
+  background:var(--dark2);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  padding:0 28px;height:38px;
+  display:flex;align-items:center;gap:16px;
+}
+.prog-bar-track{
+  flex:1;height:4px;
+  background:rgba(255,255,255,.08);
+  border-radius:99px;overflow:hidden;
+}
+.prog-bar-fill{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,var(--lavender),var(--pink));
+  border-radius:99px;
+  transition:width .3s ease;
+}
+.prog-label{
+  font-size:12px;font-weight:600;
+  color:rgba(255,255,255,.55);
+  white-space:nowrap;font-family:'DM Mono',monospace;
+  min-width:160px;text-align:right;
+}
+.prog-label span{color:var(--pink);font-size:13px;}
+
+/* ── QUESTIONS PANEL ──────────────────────────────────── */
+.q-fab{
+  position:fixed;bottom:24px;left:24px;
+  width:44px;height:44px;border-radius:50%;
+  background:var(--grape);color:white;
+  border:none;cursor:pointer;font-size:18px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 16px rgba(74,66,128,.35);
+  transition:all .18s ease;z-index:100;
+}
+.q-fab:hover{transform:scale(1.08);background:#5A55A0;}
+.q-fab-badge{
+  position:absolute;top:-4px;right:-4px;
+  width:18px;height:18px;border-radius:50%;
+  background:var(--pink);color:white;
+  font-size:9px;font-weight:700;
+  display:none;align-items:center;justify-content:center;
+  border:2px solid var(--dark2);
+}
+.q-fab-badge.show{display:flex;}
+
+.q-panel{
+  position:fixed;bottom:0;left:0;
+  width:380px;max-height:70vh;
+  background:var(--cream);
+  border:1px solid var(--border);
+  border-bottom:none;
+  border-radius:16px 16px 0 0;
+  box-shadow:0 -8px 40px rgba(74,66,128,.15);
+  transform:translateY(100%);
+  transition:transform .28s cubic-bezier(.4,0,.2,1);
+  z-index:200;display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.q-panel.open{transform:translateY(0);}
+
+.q-panel-hd{
+  padding:16px 20px 12px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--cream2);flex-shrink:0;
+}
+.q-panel-title{
+  font-size:14px;font-weight:600;color:var(--dark);
+  display:flex;align-items:center;gap:8px;
+}
+.q-panel-title span{
+  background:rgba(74,66,128,.1);color:var(--grape);
+  border-radius:10px;padding:1px 8px;
+  font-size:11px;font-weight:700;
+}
+.q-close{
+  background:none;border:none;cursor:pointer;
+  font-size:18px;color:var(--soft);padding:2px;
+  line-height:1;transition:color .1s;
+}
+.q-close:hover{color:var(--dark);}
+
+.q-input-row{
+  padding:14px 16px;border-bottom:1px solid var(--border);
+  display:flex;gap:8px;flex-shrink:0;background:var(--cream);
+}
+.q-input{
+  flex:1;border:1px solid var(--border);border-radius:8px;
+  padding:9px 12px;font-family:'DM Sans',sans-serif;
+  font-size:13.5px;color:var(--dark);background:var(--white);
+  outline:none;resize:none;height:40px;transition:border .15s;
+}
+.q-input:focus{border-color:var(--lavender);height:72px;}
+.q-add{
+  padding:9px 14px;background:var(--grape);color:white;
+  border:none;border-radius:8px;cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;
+  transition:background .15s;align-self:flex-end;white-space:nowrap;
+}
+.q-add:hover{background:#5A55A0;}
+
+.q-list{overflow-y:auto;flex:1;padding:10px 16px;}
+.q-empty{
+  text-align:center;padding:30px 16px;
+  color:var(--soft);font-size:13px;font-style:italic;
+}
+.q-item{
+  background:var(--white);border:1px solid var(--border);
+  border-radius:10px;padding:12px 14px;margin-bottom:8px;
+  position:relative;transition:box-shadow .15s;
+}
+.q-item:hover{box-shadow:var(--shadow);}
+.q-item.resolved{opacity:.5;}
+.q-item.resolved .q-item-text{text-decoration:line-through;}
+.q-item-meta{
+  font-size:10px;color:var(--soft);margin-bottom:5px;
+  font-family:'DM Mono',monospace;display:flex;gap:8px;align-items:center;
+}
+.q-item-text{font-size:13.5px;color:var(--mid);line-height:1.5;}
+.q-item-actions{
+  display:flex;gap:6px;margin-top:9px;
+  padding-top:9px;border-top:1px solid var(--border);
+}
+.q-btn{
+  border:1px solid var(--border);background:var(--cream2);
+  border-radius:6px;padding:4px 10px;font-size:11px;
+  font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;
+  color:var(--soft);transition:all .12s;
+}
+.q-btn:hover{background:var(--white);color:var(--dark);}
+.q-btn.resolve{color:var(--grape);border-color:rgba(74,66,128,.3);}
+.q-btn.resolve:hover{background:rgba(74,66,128,.08);}
+.q-btn.del{color:#C04040;}
+.q-btn.del:hover{background:#FFF0F0;border-color:#FFAAAA;}
+.q-tag{
+  display:inline-block;padding:1px 7px;
+  border-radius:9px;font-size:9px;font-weight:700;
+  background:rgba(237,168,188,.2);color:#7A4060;
+  letter-spacing:.05em;
+}
+.q-tag.done{background:rgba(74,66,128,.1);color:var(--grape);}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-brand">Recon Guide</div>
+  <div class="nav-items">
+    <button class="nbtn" onclick="goTo('before')"><span class="nbadge" style="background:var(--pink)">✓</span>Before</button>
+    <button class="nbtn" onclick="goTo('p01')"><span class="nbadge">01</span>Clean</button>
+    <button class="nbtn" onclick="goTo('p02')"><span class="nbadge">02</span>Match</button>
+    <button class="nbtn" onclick="goTo('p03')"><span class="nbadge">03</span>Flags</button>
+    <button class="nbtn" onclick="goTo('p04')"><span class="nbadge">04</span>Views</button>
+    <button class="nbtn" onclick="goTo('p05')"><span class="nbadge">05</span>Validate</button>
+    <button class="nbtn" onclick="goTo('qr')"><span class="nbadge qr">QR</span>Reference</button>
+  </div>
+</nav>
+
+
+<!-- PROGRESS STRIP -->
+<div class="prog-strip" id="progStrip">
+  <div class="prog-bar-track"><div class="prog-bar-fill" id="progFill"></div></div>
+  <div class="prog-label" id="progLabel">0 of 0 &nbsp;·&nbsp; <span>0%</span></div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div>
+    <div class="hero-eye">Inventory Reconciliation Guide</div>
+    <h1 class="hero-h1">Entra vs<br><em>SharePoint</em></h1>
+    <p class="hero-sub">IT Asset Management · Repsol North America · CONFIDENTIAL</p>
+  </div>
+  <div class="hero-meta">
+    <div class="meta-block">
+      <div class="meta-row"><span class="meta-lbl">Scope</span><span class="meta-val">Laptops · Workstations · Mobile</span></div>
+      <div class="meta-row"><span class="meta-lbl">Not Included</span><span class="meta-val">Telecom · Billing · Power BI</span></div>
+      <div class="meta-row"><span class="meta-lbl">Goal</span><span class="meta-val">Find gaps, mismatches &amp; stale records</span></div>
+      <div class="meta-row"><span class="meta-lbl">Phases</span><span class="meta-val">5 phases · Complete in order</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- RUN OF SHOW -->
+<div class="ros">
+  <div class="ros-node" onclick="goTo('before')">
+    <div class="ros-badge b-pink">✓</div>
+    <div class="ros-title">Pre-Flight Setup</div>
+    <div class="ros-time">Before you start</div>
+  </div>
+  <div class="ros-node" onclick="goTo('p01')">
+    <div class="ros-badge">01</div>
+    <div class="ros-title">Clean Both Datasets</div>
+    <div class="ros-time">Phase 1</div>
+  </div>
+  <div class="ros-node" onclick="goTo('p02')">
+    <div class="ros-badge">02</div>
+    <div class="ros-title">Match Logic</div>
+    <div class="ros-time">Phase 2</div>
+  </div>
+  <div class="ros-node" onclick="goTo('p03')">
+    <div class="ros-badge">03</div>
+    <div class="ros-title">Comparison Flags</div>
+    <div class="ros-time">Phase 3</div>
+  </div>
+  <div class="ros-node" onclick="goTo('p04')">
+    <div class="ros-badge">04</div>
+    <div class="ros-title">Key Views</div>
+    <div class="ros-time">Phase 4</div>
+  </div>
+  <div class="ros-node" onclick="goTo('p05')">
+    <div class="ros-badge">05</div>
+    <div class="ros-title">Manual Validation</div>
+    <div class="ros-time">Phase 5</div>
+  </div>
+  <div class="ros-node" onclick="goTo('qr')">
+    <div class="ros-badge b-soft">QR</div>
+    <div class="ros-title">Quick Reference</div>
+    <div class="ros-time">Print page</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ── BEFORE ── -->
+<section class="sec" id="before">
+  <div class="sec-hd">
+    <div class="sec-num pink">✓</div>
+    <div class="sec-title">Before You Start — Pre-Flight Setup
+      <small>Complete every item before opening either file</small>
+    </div>
+  </div>
+  <div class="sec-rule"></div>
+
+  <div class="kn-row">
+    <div class="kn-chip"><span class="kn-lbl">Primary Source</span><span class="kn-val">SharePoint Inventory</span></div>
+    <div class="kn-chip"><span class="kn-lbl">Secondary Source</span><span class="kn-val">Entra Device Export</span></div>
+    <div class="kn-chip"><span class="kn-lbl">Match Priority</span><span class="kn-val">Serial → Name → Email</span></div>
+    <div class="kn-chip"><span class="kn-lbl">Stale Threshold</span><span class="kn-val">90+ days no sign-in</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><span>✅</span><span class="card-lbl">Pre-Flight Checklist — tap each item to check off</span></div>
+    <div class="card-body">
+      <div class="cklist" id="ck-before">
+        <div class="ckitem" onclick="ck(this)">
+          <div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="cktxt">Raw exports saved to <code>01_Raw_Exports/</code> — dated and <strong>untouched</strong>. Never edit a raw file.</div>
+        </div>
+        <div class="ckitem" onclick="ck(this)">
+          <div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="cktxt">Working file copies created in <code>02_Working_Files/</code> — these are what you clean.</div>
+        </div>
+        <div class="ckitem" onclick="ck(this)">
+          <div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="cktxt"><strong>One master reconciliation workbook</strong> created in <code>03_Reconciliation/</code>. One file. One source of truth.</div>
+        </div>
+        <div class="ckitem" onclick="ck(this)">
+          <div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="cktxt">Both working files open and ready. Do <strong>not</strong> work from the raw exports.</div>
+        </div>
+        <div class="ckitem" onclick="ck(this)">
+          <div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="cktxt">This guide open on a <strong>separate window</strong> — follow phase by phase, do not skip ahead.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout c-lavender">
+    <span class="c-ico">💡</span>
+    <span><strong>Key principle:</strong> Complete all phases in order. Do not start Phase 3 until Phase 1 and 2 are done. Messy source data produces unreliable results no matter how good your comparison logic is.</span>
+  </div>
+</section>
+
+<!-- ── PHASE 01 ── -->
+<section class="sec" id="p01">
+  <div class="sec-hd">
+    <div class="sec-num">01</div>
+    <div class="sec-title">Clean Both Datasets
+      <small>Complete all cleanup before any comparison</small>
+    </div>
+  </div>
+  <div class="sec-rule"></div>
+
+  <div class="start-pill">📋 SharePoint Working File → Clean before touching Entra</div>
+
+  <div class="two-col">
+    <div class="panel panel-do">
+      <div class="panel-lbl grape">👆 SharePoint — What to Clean</div>
+      <div class="panel-body">
+        <ul class="slist">
+          <li class="sitem"><div class="snum">1</div><div class="stxt">Trim and <strong>UPPERCASE</strong> all serial numbers — no spaces, no mixed case</div></li>
+          <li class="sitem"><div class="snum">2</div><div class="stxt">Trim and <strong>lowercase</strong> all email addresses — consistency required for matching</div></li>
+          <li class="sitem"><div class="snum">3</div><div class="stxt">Trim device names — normalize case, note any naming pattern inconsistencies</div></li>
+          <li class="sitem"><div class="snum">4</div><div class="stxt">Flag blank serials — research each one before continuing</div></li>
+          <li class="sitem"><div class="snum">5</div><div class="stxt">Flag placeholder serials: <code>N/A</code> <code>UNKNOWN</code> <code>TBD</code> <code>000000</code></div></li>
+          <li class="sitem"><div class="snum">6</div><div class="stxt">Find duplicate serials — each must appear <strong>exactly once</strong>. Identify the active record.</div></li>
+          <li class="sitem"><div class="snum">7</div><div class="stxt">Standardize status values: <strong>Assigned · In Stock · Repair · Retired · Loaner</strong></div></li>
+        </ul>
+      </div>
+    </div>
+    <div class="panel panel-why">
+      <div class="panel-lbl peach">⚠️ Why Each Step Matters</div>
+      <div class="panel-body">
+        <p class="why-item"><strong>Serials in different case</strong> will not match. "abc123" ≠ "ABC123" in most join logic.</p>
+        <p class="why-item"><strong>Email case mismatches</strong> cause false ownership mismatches — same person, different case, no match.</p>
+        <p class="why-item"><strong>Duplicate serials</strong> cause one-to-many joins — your row count will inflate and look correct even when wrong.</p>
+        <p class="why-item"><strong>Inconsistent status values</strong> like "assigned" vs "Assigned" create false filter failures in downstream review.</p>
+        <p class="why-item"><strong>Retired devices</strong> in Entra are a cleanup signal — they should have been removed at offboarding.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><span>📋</span><span class="card-lbl">Entra Export — Keep vs Remove</span></div>
+    <div class="card-body" style="padding:0;">
+      <table class="flag-table">
+        <thead><tr><th>Keep These Columns</th><th>Delete These Columns</th></tr></thead>
+        <tbody>
+          <tr><td><span class="flag-name">User</span></td><td style="color:var(--soft)">id</td></tr>
+          <tr><td><span class="flag-name">Email</span></td><td style="color:var(--soft)">deviceId</td></tr>
+          <tr><td><span class="flag-name">displayName_clean</span></td><td style="color:var(--soft)">profileType</td></tr>
+          <tr><td><span class="flag-name">Model</span></td><td style="color:var(--soft)">trustType</td></tr>
+          <tr><td><span class="flag-name">operatingSystem</span></td><td style="color:var(--soft)">mdm</td></tr>
+          <tr><td><span class="flag-name">operatingSystemVersion</span></td><td style="color:var(--soft)">securitySettingsManage</td></tr>
+          <tr><td><span class="flag-name">isCompliant</span></td><td style="color:var(--soft)">displayName (raw)</td></tr>
+          <tr><td><span class="flag-name">lastSignInDate</span></td><td style="color:var(--soft);font-style:italic;">(all other system columns)</td></tr>
+          <tr><td><span class="flag-name">registrationDate</span></td><td></td></tr>
+          <tr><td><span class="flag-name">Serial Number</span></td><td></td></tr>
+          <tr><td><span class="flag-name">Ownership</span></td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><span>✅</span><span class="card-lbl">Phase 1 — Operational Validation</span></div>
+    <div class="card-body">
+      <div class="cklist">
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">SharePoint serials trimmed and uppercased</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Blank and placeholder serials flagged and researched</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Duplicate serials identified and resolved</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Email addresses trimmed and lowercased in both files</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Entra export cleaned — only listed columns remain</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Entra filtered to Corporate Ownership + relevant OS only</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Devices with Last Sign-In 90+ days flagged as potentially stale</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Both working files saved — ready for Phase 2</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PHASE 02 ── -->
+<section class="sec" id="p02">
+  <div class="sec-hd">
+    <div class="sec-num">02</div>
+    <div class="sec-title">Establish Match Logic
+      <small>Same priority order for every record — no exceptions</small>
+    </div>
+  </div>
+  <div class="sec-rule"></div>
+
+  <div class="start-pill">🔗 Reconciliation Workbook → Match logic applied before any joins</div>
+
+  <div class="callout c-grape">
+    <span class="c-ico">📌</span>
+    <span>Always follow the same priority order. Do not mix methods between records. Inconsistent matching produces unreliable results — and the output will look correct even when it isn't.</span>
+  </div>
+
+  <div class="two-col">
+    <div class="panel panel-do">
+      <div class="panel-lbl grape">💻 Laptop &amp; Workstation Priority</div>
+      <div class="panel-body" style="padding:0;">
+        <table class="pri-table">
+          <tr class="pri-1">
+            <td>1</td>
+            <td>Serial Number</td>
+            <td>Primary. Most reliable. Always try first.</td>
+          </tr>
+          <tr>
+            <td style="color:var(--soft);">2</td>
+            <td>Device Name</td>
+            <td>Use if serial is missing or inconsistent.</td>
+          </tr>
+          <tr>
+            <td style="color:var(--soft);">3</td>
+            <td>User Email</td>
+            <td>Last resort. Not unique — one user may have multiple devices.</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <div class="panel panel-do">
+      <div class="panel-lbl grape">📱 Mobile Device Priority</div>
+      <div class="panel-body" style="padding:0;">
+        <table class="pri-table">
+          <tr class="pri-1">
+            <td>1</td>
+            <td>Serial / IMEI</td>
+            <td>Primary. Use device serial or IMEI from MDM or SharePoint.</td>
+          </tr>
+          <tr>
+            <td style="color:var(--soft);">2</td>
+            <td>Device Name</td>
+            <td>Secondary if serial is unavailable.</td>
+          </tr>
+          <tr>
+            <td style="color:var(--soft);">3</td>
+            <td>User Email</td>
+            <td>Last resort only. Same caution applies.</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><span>💬</span><span class="card-lbl">Common Match Logic Questions — tap to expand</span></div>
+    <div class="card-body" style="padding:12px 14px;">
+      <div class="qa-wrap">
+        <div class="qa-item">
+          <button class="qa-trigger" onclick="qa(this)"><span class="qa-q">"Why can't I just match by email — it's easier?"</span><span class="qa-chev">▼</span></button>
+          <div class="qa-ans">Email is not unique to a device. If a user has two laptops, both will appear to match — even if one is genuinely missing from a system. Serial number is the only field that is truly unique to one physical device.</div>
+        </div>
+        <div class="qa-item">
+          <button class="qa-trigger" onclick="qa(this)"><span class="qa-q">"Why does the device name differ between the two systems?"</span><span class="qa-chev">▼</span></button>
+          <div class="qa-ans">Device names can change during imaging, reimaging, or reassignment. The physical hardware never changes its serial number. Hostname mismatches are common — that's why serial is authoritative and name is only a fallback.</div>
+        </div>
+        <div class="qa-item">
+          <button class="qa-trigger" onclick="qa(this)"><span class="qa-q">"What if the serial is missing in both systems?"</span><span class="qa-chev">▼</span></button>
+          <div class="qa-ans">Fall back to Device Name, then User Email — in that order. Flag the record as Needs Review and research the serial manually. Do not leave it unresolved — a missing serial means you cannot reliably match that device.</div>
+        </div>
+        <div class="qa-item">
+          <button class="qa-trigger" onclick="qa(this)"><span class="qa-q">"Is a ownership mismatch the same as a missing device?"</span><span class="qa-chev">▼</span></button>
+          <div class="qa-ans">No. If the serial matches but the assigned user is different between systems, that is an ownership mismatch — not a gap. The device exists in both systems. The assignment record is just out of sync between them.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><span>✅</span><span class="card-lbl">Phase 2 — Operational Validation</span></div>
+    <div class="card-body">
+      <div class="cklist">
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Match logic confirmed for laptops and workstations</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Match logic confirmed for mobile devices</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Serial numbers in the same format in both files — confirmed</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Priority order confirmed: Serial → Device Name → Email</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PHASE 03 ── -->
+<section class="sec" id="p03">
+  <div class="sec-hd">
+    <div class="sec-num">03</div>
+    <div class="sec-title">Build Comparison Flags
+      <small>Populate all five flags before reviewing any exception</small>
+    </div>
+  </div>
+  <div class="sec-rule"></div>
+
+  <div class="start-pill">🚩 Reconciliation Master → All flag columns populated before Phase 4</div>
+
+  <div class="card">
+    <div class="card-hd"><span>📌</span><span class="card-lbl">Comparison Flags — What to Build</span></div>
+    <div class="card-body" style="padding:0;">
+      <table class="flag-table">
+        <thead><tr><th>Flag</th><th>Formula Logic</th><th>What It Catches</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="flag-name">Exists in Entra</span></td>
+            <td>Serial found in Entra after join → Yes / No</td>
+            <td>Devices in SharePoint with no Entra record</td>
+          </tr>
+          <tr>
+            <td><span class="flag-name">Exists in SharePoint</span></td>
+            <td>Serial found in SharePoint after join → Yes / No</td>
+            <td>Entra devices with no SharePoint inventory record</td>
+          </tr>
+          <tr>
+            <td><span class="flag-name">Ownership Match</span></td>
+            <td>SP Email = Entra Email → Yes / No</td>
+            <td>Devices assigned to different users in each system</td>
+          </tr>
+          <tr>
+            <td><span class="flag-name">Stale Device</span></td>
+            <td>lastSignInDate older than 90 days → Flag</td>
+            <td>Devices with no recent activity — potential reclaim</td>
+          </tr>
+          <tr>
+            <td><span class="flag-name">Duplicate Assignment</span></td>
+            <td>Same serial appears more than once → Flag</td>
+            <td>Same device assigned to multiple users</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="callout c-peach">
+    <span class="c-ico">⚠️</span>
+    <span><strong>Do not start reviewing exceptions until all five flags are populated.</strong> Partially flagged data wastes time and creates confusion — you'll end up re-running the comparison mid-review.</span>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><span>✅</span><span class="card-lbl">Phase 3 — Operational Validation</span></div>
+    <div class="card-body">
+      <div class="cklist">
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Exists in Entra — populated for all SharePoint rows</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Exists in SharePoint — populated for Entra-only rows</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Ownership Match — calculated for all matched rows</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Stale Device — flagged based on lastSignInDate threshold</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Duplicate Assignment — populated across all rows</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PHASE 04 ── -->
+<section class="sec" id="p04">
+  <div class="sec-hd">
+    <div class="sec-num">04</div>
+    <div class="sec-title">Validate Key Views
+      <small>Work through each exception category in order</small>
+    </div>
+  </div>
+  <div class="sec-rule"></div>
+
+  <div class="start-pill">🔍 Filter by each flag — review one exception category at a time</div>
+
+  <div class="exc-card">
+    <div class="exc-hd">
+      <span class="exc-title">Missing from SharePoint</span>
+      <span class="exc-tag tag-grape">ENTRA ONLY</span>
+    </div>
+    <div class="exc-body">
+      <div class="exc-row"><span class="exc-bullet">▸</span>Device is in Entra but has no corresponding SharePoint record</div>
+      <div class="exc-row"><span class="exc-bullet">▸</span>Indicates: unmanaged device or inventory record was never created</div>
+      <div class="exc-row"><span class="exc-bullet">▸</span><strong>Action:</strong> Create the SharePoint record or confirm device status and disposition</div>
+    </div>
+  </div>
+
+  <div class="exc-card">
+    <div class="exc-hd">
+      <span class="exc-title">Missing from Entra</span>
+      <span class="exc-tag tag-pink">SHAREPOINT ONLY</span>
+    </div>
+    <div class="exc-body">
+      <div class="exc-row"><span class="exc-bullet">▸</span>Device is in SharePoint but has no Entra record</div>
+      <div class="exc-row"><span class="exc-bullet">▸</span>Indicates: retired device or stale inventory entry never cleaned up</div>
+      <div class="exc-row"><span class="exc-bullet">▸</span><strong>Action:</strong> Verify device status and update or remove the SharePoint record</div>
+    </div>
+  </div>
+
+  <div class="exc-card">
+    <div class="exc-hd">
+      <span class="exc-title">Ownership Mismatch</span>
+      <span class="exc-tag tag-peach">MISMATCH</span>
+    </div>
+    <div class="exc-body">
+      <div class="exc-row"><span class="exc-bullet">▸</span>Device is in both systems but assigned to different users</div>
+      <div class="exc-row"><span class="exc-bullet">▸</span>Indicates: outdated assignment or inventory not updated after reassignment</div>
+      <div class="exc-row"><span class="exc-bullet">▸</span><strong>Action:</strong> Confirm who currently has the device — update the lagging system</div>
+    </div>
+  </div>
+
+  <div class="exc-card">
+    <div class="exc-hd">
+      <span class="exc-title">Stale Devices</span>
+      <span class="exc-tag tag-lav">STALE</span>
+    </div>
+    <div class="exc-body">
+      <div class="exc-row"><span class="exc-bullet">▸</span>No recent sign-in detected in Entra — 90+ days</div>
+      <div class="exc-row"><span class="exc-bullet">▸</span>Indicates: cleanup candidate, unassigned device, or reclaim opportunity</div>
+      <div class="exc-row"><span class="exc-bullet">▸</span><strong>Action:</strong> Review lastSignInDate — cross-check with SharePoint device status</div>
+    </div>
+  </div>
+
+  <div class="exc-card">
+    <div class="exc-hd">
+      <span class="exc-title">Duplicate Assignments</span>
+      <span class="exc-tag tag-soft">DUPLICATE</span>
+    </div>
+    <div class="exc-body">
+      <div class="exc-row"><span class="exc-bullet">▸</span>Same device appears assigned to more than one user in either system</div>
+      <div class="exc-row"><span class="exc-bullet">▸</span>Indicates: data entry error or reassignment not fully completed</div>
+      <div class="exc-row"><span class="exc-bullet">▸</span><strong>Action:</strong> Confirm current user — remove the duplicate assignment from both systems</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><span>✅</span><span class="card-lbl">Phase 4 — Operational Validation</span></div>
+    <div class="card-body">
+      <div class="cklist">
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Missing from SharePoint — all records reviewed and actioned or tracked</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Missing from Entra — all records reviewed and actioned or tracked</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Ownership Mismatches — all corrected or documented in Notes column</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Stale Devices — status confirmed, do not remove without verifying retirement</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Duplicate Assignments — all resolved, correct record identified</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PHASE 05 ── -->
+<section class="sec" id="p05">
+  <div class="sec-hd">
+    <div class="sec-num">05</div>
+    <div class="sec-title">Manual Validation
+      <small>Do not skip — automation cannot catch its own errors</small>
+    </div>
+  </div>
+  <div class="sec-rule"></div>
+
+  <div class="start-pill">🔎 Spot-check minimum 20–30 records before trusting any output</div>
+
+  <div class="callout c-pink">
+    <span class="c-ico">🚨</span>
+    <span><strong>Do not trust automation until this phase passes.</strong> A false mismatch sent to leadership damages trust in the process. Manual validation is not optional.</span>
+  </div>
+
+  <div class="two-col">
+    <div class="panel panel-do">
+      <div class="panel-lbl grape">👆 What to Validate</div>
+      <div class="panel-body">
+        <ul class="slist">
+          <li class="sitem"><div class="snum">→</div><div class="stxt">At least <strong>20 laptop records</strong> and <strong>20 mobile records</strong></div></li>
+          <li class="sitem"><div class="snum">→</div><div class="stxt">At least <strong>5 Valid Match</strong> rows — confirm both sides agree</div></li>
+          <li class="sitem"><div class="snum">→</div><div class="stxt">At least <strong>5 Missing from Entra</strong> — confirm genuinely absent</div></li>
+          <li class="sitem"><div class="snum">→</div><div class="stxt">At least <strong>5 Ownership Mismatch</strong> — confirm users are actually different</div></li>
+          <li class="sitem"><div class="snum">→</div><div class="stxt">At least <strong>3 Stale Device</strong> rows — confirm lastSignInDate is accurate</div></li>
+          <li class="sitem"><div class="snum">→</div><div class="stxt">At least <strong>2 Retired devices</strong> — confirm excluded from active counts correctly</div></li>
+        </ul>
+      </div>
+    </div>
+    <div class="panel panel-why">
+      <div class="panel-lbl peach">⚠️ How to Spot a False Mismatch</div>
+      <div class="panel-body">
+        <p class="why-item">Device shows <strong>Missing from Entra</strong> but you find it there manually → serial format is inconsistent. Go back to Phase 1 cleanup.</p>
+        <p class="why-item">Ownership Mismatch shows the <strong>same person twice</strong> → name formatting differs between systems. Fix normalization.</p>
+        <p class="why-item"><strong>Row count jumped</strong> after joining → a duplicate serial is causing one-to-many matches. Fix duplicates first.</p>
+        <p class="why-item"><strong>Count looks right</strong> but spot-checks fail → data is wrong underneath. Stop and fix before continuing.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><span>✅</span><span class="card-lbl">Phase 5 — Validation Checklist</span></div>
+    <div class="card-body">
+      <div class="cklist">
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">20+ laptop records manually validated</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">20+ mobile records manually validated</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Joins confirmed accurate — Entra data matches the correct device</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Identifier formatting confirmed consistent across both systems</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Stale device threshold confirmed appropriate before flagging at scale</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">All spot-check results recorded in Validation Result column</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">No failed spot-checks outstanding — all investigated before proceeding</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── QUICK REFERENCE ── -->
+<section class="sec" id="qr">
+  <div class="sec-hd">
+    <div class="sec-num soft">QR</div>
+    <div class="sec-title">Quick Reference Summary
+      <small>Final close-out checklist · Status reference</small>
+    </div>
+  </div>
+  <div class="sec-rule"></div>
+
+  <div class="card">
+    <div class="card-hd"><span>📋</span><span class="card-lbl pink">Status Reference</span></div>
+    <div class="card-body" style="padding:0;">
+      <table class="status-table">
+        <thead><tr><th>Status</th><th>What it means</th><th>What to do</th></tr></thead>
+        <tbody>
+          <tr><td><div class="status-name">Valid Match</div></td><td>Both systems match, same owner</td><td>No action needed</td></tr>
+          <tr><td><div class="status-name">Missing from Entra</div></td><td>In SharePoint, not in Entra</td><td>Check enrollment</td></tr>
+          <tr><td><div class="status-name">Missing from SP</div></td><td>In Entra, not in SharePoint</td><td>Add to inventory</td></tr>
+          <tr><td><div class="status-name">Ownership Mismatch</div></td><td>Different user in each system</td><td>Confirm and correct</td></tr>
+          <tr><td><div class="status-name">Stale Device</div></td><td>No sign-in in 90+ days</td><td>Review and decide</td></tr>
+          <tr><td><div class="status-name">Duplicate Record</div></td><td>Same device appears twice</td><td>Find and remove extra</td></tr>
+          <tr><td><div class="status-name">Enrollment Gap</div></td><td>Assigned but never enrolled</td><td>Contact user to enroll</td></tr>
+          <tr><td><div class="status-name">Cleanup Candidate</div></td><td>Stale, unassigned, or retired</td><td>Reclaim or retire</td></tr>
+          <tr><td><div class="status-name">Needs Review</div></td><td>Something is off, not confirmed</td><td>Investigate manually</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><span>✅</span><span class="card-lbl pink">Close-Out Checklist — Complete Before Any Report</span></div>
+    <div class="card-body">
+      <div class="cklist">
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt"><strong>Phase 1</strong> — Both datasets cleaned, standardized, and filtered</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt"><strong>Phase 2</strong> — Match logic confirmed and applied consistently</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt"><strong>Phase 3</strong> — All five comparison flags populated</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt"><strong>Phase 4</strong> — All exception views reviewed and actioned</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt"><strong>Phase 5</strong> — Manual validation complete, 20–30 records confirmed</div></div>
+        <div class="ckitem" onclick="ck(this)"><div class="ckbox"><svg class="cktick" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cktxt">Results reviewed before any dashboard or leadership report is built</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout c-grape" style="margin-top:8px;">
+    <span class="c-ico">📌</span>
+    <div>
+      <div style="font-weight:600;color:var(--dark);margin-bottom:4px;">Operational Goal</div>
+      <div style="font-size:13.5px;font-style:italic;">Ensure device ownership, presence, and status remain aligned between Entra and SharePoint at all times.</div>
+      <div style="margin-top:10px;font-weight:600;color:var(--grape);">Rule: Do not trust automation until manual validation passes.</div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- RESET -->
+<button class="reset-btn" onclick="resetAll()">
+  ☑ <span class="ck-count" id="ckCount">0</span> checked
+</button>
+
+<script>
+// ── Checkboxes + Progress ──────────────────────────────────────
+function ck(el){
+  el.classList.toggle('done');
+  updateCount();
+  updateProgress();
+}
+function updateCount(){
+  document.getElementById('ckCount').textContent=document.querySelectorAll('.ckitem.done').length;
+}
+function updateProgress(){
+  const total=document.querySelectorAll('.ckitem').length;
+  const done=document.querySelectorAll('.ckitem.done').length;
+  const pct=total===0?0:Math.round((done/total)*100);
+  document.getElementById('progFill').style.width=pct+'%';
+  document.getElementById('progLabel').innerHTML=
+    done+' of '+total+' &nbsp;&middot;&nbsp; <span>'+pct+'%</span>';
+}
+function resetAll(){
+  document.querySelectorAll('.ckitem.done').forEach(e=>e.classList.remove('done'));
+  updateCount();
+  updateProgress();
+}
+// init on load
+updateProgress();
+
+// ── Questions Panel ────────────────────────────────────────────
+let questions=[];
+let qOpen=false;
+
+function toggleQPanel(){
+  qOpen=!qOpen;
+  document.getElementById('qPanel').classList.toggle('open',qOpen);
+}
+document.addEventListener('click',function(e){
+  const panel=document.getElementById('qPanel');
+  const fab=document.querySelector('.q-fab');
+  if(qOpen&&!panel.contains(e.target)&&!fab.contains(e.target)){
+    qOpen=false; panel.classList.remove('open');
+  }
+});
+
+// Enter key in textarea
+document.addEventListener('DOMContentLoaded',function(){
+  const inp=document.getElementById('qInput');
+  if(inp){
+    inp.addEventListener('keydown',function(e){
+      if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();addQuestion();}
+    });
+  }
+  renderQuestions();
+  updateProgress();
+});
+
+function addQuestion(){
+  const inp=document.getElementById('qInput');
+  const text=(inp.value||'').trim();
+  if(!text)return;
+  const now=new Date();
+  const ts=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+' · '+now.toLocaleDateString([],{month:'short',day:'numeric'});
+  questions.unshift({id:Date.now(),text,ts,resolved:false});
+  inp.value='';
+  inp.style.height='40px';
+  renderQuestions();
+}
+function resolveQ(id){
+  const q=questions.find(x=>x.id===id);
+  if(q)q.resolved=!q.resolved;
+  renderQuestions();
+}
+function deleteQ(id){
+  questions=questions.filter(x=>x.id!==id);
+  renderQuestions();
+}
+function renderQuestions(){
+  const list=document.getElementById('qList');
+  const empty=document.getElementById('qEmpty');
+  const count=document.getElementById('qCount');
+  const badge=document.getElementById('qBadge');
+  const open=questions.filter(x=>!x.resolved).length;
+  count.textContent=questions.length;
+  badge.textContent=open>0?open:'';
+  badge.classList.toggle('show',open>0);
+  if(questions.length===0){
+    empty.style.display='block';
+    list.querySelectorAll('.q-item').forEach(e=>e.remove());
+    return;
+  }
+  empty.style.display='none';
+  list.querySelectorAll('.q-item').forEach(e=>e.remove());
+  questions.forEach(q=>{
+    const div=document.createElement('div');
+    div.className='q-item'+(q.resolved?' resolved':'');
+    div.innerHTML=
+      '<div class="q-item-meta">'+
+        '<span class="q-tag'+(q.resolved?' done':'')+'">'+
+          (q.resolved?'Resolved':'Open')+'</span>'+q.ts+
+      '</div>'+
+      '<div class="q-item-text">'+escHtml(q.text)+'</div>'+
+      '<div class="q-item-actions">'+
+        '<button class="q-btn resolve" onclick="resolveQ('+q.id+')">'+
+          (q.resolved?'Reopen':'Mark resolved')+'</button>'+
+        '<button class="q-btn del" onclick="deleteQ('+q.id+')">Delete</button>'+
+      '</div>';
+    list.appendChild(div);
+  });
+}
+function escHtml(t){
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function qa(btn){
+  const ans=btn.nextElementSibling;
+  const open=ans.classList.contains('open');
+  btn.closest('.qa-wrap').querySelectorAll('.qa-trigger.open,.qa-ans.open').forEach(e=>e.classList.remove('open'));
+  if(!open){btn.classList.add('open');ans.classList.add('open');}
+}
+function goTo(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});}
+
+const sections=['before','p01','p02','p03','p04','p05','qr'];
+const btns=document.querySelectorAll('.nbtn');
+function onScroll(){
+  let cur=0;
+  sections.forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(el&&el.getBoundingClientRect().top<=76)cur=i;
+  });
+  btns.forEach((b,i)=>b.classList.toggle('active',i===cur));
+  const pct=window.scrollY/(document.body.scrollHeight-window.innerHeight);
+  document.getElementById('progress').style.width=(pct*100)+'%';
+}
+window.addEventListener('scroll',onScroll,{passive:true});
+onScroll();
+</script>
+
+<!-- QUESTIONS PANEL -->
+<button class="q-fab" onclick="toggleQPanel()" title="Document questions">
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <path d="M10 2C5.58 2 2 5.36 2 9.5c0 1.9.72 3.63 1.9 4.97L3 17l2.8-.82C7 16.7 8.46 17 10 17c4.42 0 8-3.36 8-7.5S14.42 2 10 2z" fill="white" opacity=".9"/>
+    <path d="M7 9h6M7 12h4" stroke="var(--grape)" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>
+  <div class="q-fab-badge" id="qBadge">0</div>
+</button>
+
+<div class="q-panel" id="qPanel">
+  <div class="q-panel-hd">
+    <div class="q-panel-title">Session Notes &amp; Questions <span id="qCount">0</span></div>
+    <button class="q-close" onclick="toggleQPanel()">&#x2715;</button>
+  </div>
+  <div class="q-input-row">
+    <textarea class="q-input" id="qInput" placeholder="Type a question or note... (Enter to add)" rows="1"></textarea>
+    <button class="q-add" onclick="addQuestion()">Add</button>
+  </div>
+  <div class="q-list" id="qList">
+    <div class="q-empty" id="qEmpty">No notes yet. Start documenting as you go.</div>
+  </div>
+</div>
+
+</body>
+</html>
